@@ -21,6 +21,27 @@ The final application logic is written with direct register access. TIM2 generat
 - Uses the internal 16 MHz HSI clock for stable Proteus simulation.
 - Includes STM32CubeIDE project files and a Proteus simulation project.
 
+## Web Demo
+
+This repository includes a frontend-only interactive simulator in `web-demo/`.
+It does not need a backend, database, or build system.
+
+Open `web-demo/index.html` in a browser to try:
+
+- animated four-digit seven-segment display
+- TIM2 1 ms interrupt simulation
+- GPIOA/GPIOB register view
+- active digit multiplexing timeline
+- speed control, pause, reset, and single-step mode
+- challenge mode for stopping the clock on a target time
+- wiring and timer configuration explanation
+
+If GitHub Pages is enabled for this repository, the demo can be served from:
+
+```text
+https://mohadesehesmaeilzadeh.github.io/stm32-digital-clock/web-demo/
+```
+
 ## Screenshots
 
 ### Proteus Simulation Circuit
