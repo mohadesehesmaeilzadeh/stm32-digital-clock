@@ -1,0 +1,62 @@
+# STM32CubeIDE / Eclipse workspace files
+.metadata/
+RemoteSystemsTempFiles/
+.recommenders/
+
+# Build directories
+Debug/
+Release/
+build/
+cmake-build-*/
+
+# Compiled objects and generated build files
+*.o
+*.obj
+*.d
+*.dep
+*.su
+*.cyclo
+*.lst
+*.list
+*.map
+*.elf
+*.axf
+*.bin
+*.hex
+*.srec
+*.out
+
+# Keep the Proteus simulation firmware path used by DigitalClock.pdsprj
+!DigitalClock/Debug/
+!DigitalClock/Debug/DigitalClock.hex
+
+# Optional: keep release firmware files if you create a firmware/ folder
+!firmware/*.hex
+!firmware/*.bin
+
+# Archives and temporary files
+*.zip
+*.7z
+*.rar
+*.tmp
+*.bak
+*.orig
+*.log
+
+# Proteus temporary/workspace files
+*.workspace
+*.pdsprj.*.workspace
+*.pdsbak
+*.DBK
+*.DMP
+*.LOG
+Backup Of *
+Last Loaded *
+
+# IDE/user-local files
+*.launch
+*.user
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
