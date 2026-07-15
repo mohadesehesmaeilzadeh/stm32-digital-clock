@@ -208,6 +208,27 @@ function renderAll() {
   renderState();
 }
 
+function applyInitialOptions() {
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get("mode");
+  const speed = Number(params.get("speed"));
+  const paused = params.get("paused") === "1";
+
+  if (["lab", "challenge", "wiring"].includes(mode)) {
+    setMode(mode);
+  }
+
+  if (Number.isFinite(speed) && speed >= 0.25 && speed <= 16) {
+    state.speed = speed;
+    $("speedRange").value = String(speed);
+  }
+
+  if (paused) {
+    state.running = false;
+    $("toggleRun").textContent = "Run";
+  }
+}
+
 function frame(now) {
   const elapsed = now - lastFrame;
   lastFrame = now;
@@ -259,5 +280,6 @@ $("newTarget").addEventListener("click", newTarget);
 $("checkTarget").addEventListener("click", checkTarget);
 
 newTarget();
+applyInitialOptions();
 renderAll();
 requestAnimationFrame(frame);

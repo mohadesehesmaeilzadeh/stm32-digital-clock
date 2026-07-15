@@ -42,6 +42,26 @@ If GitHub Pages is enabled for this repository, the demo can be served from:
 https://mohadesehesmaeilzadeh.github.io/stm32-digital-clock/web-demo/
 ```
 
+### Web Demo Screenshots
+
+#### Lab Mode
+
+![Web demo lab mode](docs/images/web-demo-lab.png)
+
+Lab mode shows the main simulator view. The seven-segment display is animated like the Proteus circuit, while the panels below show the current interrupt state, active digit, millisecond counter, GPIOA segment output, GPIOB digit-select output, and the recent multiplexing timeline.
+
+#### Challenge Mode
+
+![Web demo challenge mode](docs/images/web-demo-challenge.png)
+
+Challenge mode turns the simulator into a small timing game. The user pauses the clock as close as possible to the target time. It makes the embedded timing idea more interactive while still using the same simulated TIM2 interrupt and multiplexed display logic.
+
+#### Wiring Mode
+
+![Web demo wiring mode](docs/images/web-demo-wiring.png)
+
+Wiring mode explains how the software maps to the hardware circuit. It summarizes the PA0-PA7 segment connections, PB0-PB3 active-low digit selection, and the TIM2 configuration used to generate a 1 ms interrupt from the 16 MHz HSI clock.
+
 ## Screenshots
 
 ### Proteus Simulation Circuit
