@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>STM32 Digital Clock - Interactive Project Demo</title>
+    <meta
+      name="description"
+      content="Premium frontend presentation and simulator for an STM32F401RE timer interrupt digital clock project."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-nav" aria-label="Main navigation">
+      <a class="brand" href="#top" aria-label="STM32 Digital Clock home">
+        <span class="brand-mark">DC</span>
+        <span>STM32 Digital Clock</span>
+      </a>
+      <nav>
+        <a href="#overview">Overview</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#demo">Demo</a>
+        <a href="#gallery">Gallery</a>
+      </nav>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light and dark mode">
+        <span></span>
+      </button>
+    </header>
+
+    <main id="top">
+      <section class="hero-section">
+        <div class="hero-ambient" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <p class="eyebrow">STM32F401RE / TIM2 / Multiplexed 7-Segment Display</p>
+          <h1>STM32 Digital Clock</h1>
+          <p class="hero-lede">
+            A polished embedded systems project that turns low-level timer interrupts, GPIO registers,
+            and multiplexing into a visual, interactive product-style experience.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#demo">Launch simulator</a>
+            <a class="btn btn-secondary" href="https://github.com/mohadesehesmaeilzadeh/stm32-digital-clock">View GitHub</a>
+          </div>
+        </div>
+
+        <div class="hero-instrument" aria-label="Live digital clock display preview">
+          <div class="instrument-topline">
+            <span>TIM2 IRQ</span>
+            <span id="heroSpeed">1.00x</span>
+          </div>
+          <div class="display-module hero-display" id="heroDisplay"></div>
+          <div class="instrument-footer">
+            <span id="heroTime">00.00</span>
+            <span>250 Hz display refresh</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell stats-strip" aria-label="Project highlights">
+        <div>
+          <span class="stat-value">1 ms</span>
+          <span class="stat-label">TIM2 interrupt period</span>
+        </div>
+        <div>
+          <span class="stat-value">16 MHz</span>
+          <span class="stat-label">Internal HSI clock</span>
+        </div>
+        <div>
+          <span class="stat-value">4 digits</span>
+          <span class="stat-label">Multiplexed display</span>
+        </div>
+        <div>
+          <span class="stat-value">0 HAL</span>
+          <span class="stat-label">Final app logic</span>
+        </div>
+      </section>
+
+      <section class="content-section" id="overview">
+        <div class="section-heading">
+          <p class="eyebrow">Project Overview</p>
+          <h2>A hardware clock explained like a modern product</h2>
+          <p>
+            The embedded code counts minutes and seconds from `00.00` to `59.59`, then rolls over.
+            The web interface mirrors the real firmware behavior so viewers can understand the timer,
+            register, and display logic without opening Proteus or STM32CubeIDE.
+          </p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <span class="feature-icon">TIM2</span>
+            <h3>Interrupt-driven timing</h3>
+            <p>TIM2 generates a 1 ms update event. The ISR refreshes one display digit and advances the software clock.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon">GPIO</span>
+            <h3>Register-level control</h3>
+            <p>GPIOA drives segment patterns and GPIOB selects the active digit using active-low common-cathode lines.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon">MPX</span>
+            <h3>Display multiplexing</h3>
+            <p>Only one digit is active per interrupt, but a 250 Hz full-display refresh makes the output look continuous.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon">WEB</span>
+            <h3>Frontend simulator</h3>
+            <p>The web demo adds live register views, speed control, challenge mode, and a polished project presentation.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="content-section architecture-section" id="architecture">
+        <div class="section-heading">
+          <p class="eyebrow">Architecture</p>
+          <h2>From clock source to glowing segments</h2>
+        </div>
+        <div class="architecture-map" aria-label="Block diagram">
+          <div class="arch-node">HSI<br /><strong>16 MHz</strong></div>
+          <div class="arch-line"></div>
+          <div class="arch-node">RCC<br /><strong>Clock enable</strong></div>
+          <div class="arch-line"></div>
+          <div class="arch-node highlight">TIM2<br /><strong>1 ms IRQ</strong></div>
+          <div class="arch-line"></div>
+          <div class="arch-node">ISR<br /><strong>Refresh + count</strong></div>
+          <div class="arch-line"></div>
+          <div class="arch-node">GPIOA/GPIOB<br /><strong>Segments + digits</strong></div>
+          <div class="arch-line"></div>
+          <div class="arch-node final">7SEG<br /><strong>MM.SS</strong></div>
+        </div>
+      </section>
+
+      <section class="content-section split-section">
+        <div class="section-heading compact">
+          <p class="eyebrow">Technologies</p>
+          <h2>Hardware, firmware, simulation, and frontend in one repo</h2>
+        </div>
+        <div class="tech-cloud">
+          <span>STM32F401RE</span>
+          <span>ARM Cortex-M4</span>
+          <span>C</span>
+          <span>CMSIS registers</span>
+          <span>TIM2</span>
+          <span>GPIOA/GPIOB</span>
+          <span>Proteus 8</span>
+          <span>STM32CubeIDE</span>
+          <span>HTML</span>
+          <span>CSS</span>
+          <span>JavaScript</span>
+          <span>GitHub Pages</span>
+        </div>
+      </section>
+
+      <section class="content-section how-section">
+        <div class="section-heading">
+          <p class="eyebrow">How It Works</p>
+          <h2>The firmware loop is empty because the interrupt does the work</h2>
+        </div>
+        <ol class="step-list">
+          <li><strong>Initialize clock</strong><span>HSI is selected as the stable 16 MHz system clock.</span></li>
+          <li><strong>Configure GPIO</strong><span>PA0-PA7 become segment outputs and PB0-PB3 become digit outputs.</span></li>
+          <li><strong>Start TIM2</strong><span>Prescaler and ARR values create one interrupt every millisecond.</span></li>
+          <li><strong>Refresh display</strong><span>Each interrupt disables all digits, writes a segment pattern, then enables one digit.</span></li>
+          <li><strong>Update time</strong><span>After 1000 interrupts, seconds increment; after 60 seconds, minutes increment.</span></li>
+        </ol>
+      </section>
+
+      <section class="content-section demo-section" id="demo">
+        <div class="section-heading">
+          <p class="eyebrow">Interactive Demo</p>
+          <h2>Run the firmware concept in the browser</h2>
+          <p>Control the simulated timer, inspect register values, play challenge mode, and switch to wiring notes.</p>
+        </div>
+
+        <div class="simulator-shell">
+          <div class="simulator-display">
+            <div class="scanbar"><span id="scanPulse"></span></div>
+            <div class="display-module" id="simDisplay"></div>
+            <div class="display-meta">
+              <span id="simTime">00.00</span>
+              <span id="activeDigitText">Digit 1 active</span>
+            </div>
+          </div>
+
+          <aside class="simulator-controls" aria-label="Simulator controls">
+            <div class="mode-tabs" role="tablist" aria-label="Simulator mode">
+              <button class="mode-button active" type="button" data-mode="lab">Lab</button>
+              <button class="mode-button" type="button" data-mode="challenge">Challenge</button>
+              <button class="mode-button" type="button" data-mode="wiring">Wiring</button>
+            </div>
+            <div class="control-row">
+              <button class="btn btn-primary" type="button" id="toggleRun">Pause</button>
+              <button class="btn btn-secondary" type="button" id="resetClock">Reset</button>
+              <button class="btn btn-secondary" type="button" id="stepMs">Step 1 ms</button>
+            </div>
+            <label class="range-control">
+              <span>Simulation speed <strong id="speedLabel">1.00x</strong></span>
+              <input id="speedRange" type="range" min="0.25" max="16" step="0.25" value="1" />
+            </label>
+            <label class="switch-row">
+              <input id="persistenceToggle" type="checkbox" checked />
+              <span>Persistence of vision</span>
+            </label>
+          </aside>
+
+          <div class="info-panels">
+            <article class="info-panel" data-panel="lab">
+              <h3>Interrupt State</h3>
+              <div class="metric-grid">
+                <div><span>minute</span><strong id="minuteValue">0</strong></div>
+                <div><span>second</span><strong id="secondValue">0</strong></div>
+                <div><span>ms_counter</span><strong id="msValue">0</strong></div>
+                <div><span>active_digit</span><strong id="activeValue">0</strong></div>
+              </div>
+            </article>
+            <article class="info-panel" data-panel="lab">
+              <h3>GPIO Register View</h3>
+              <div class="register-block">
+                <div><span>GPIOA ODR</span><code id="gpioAHex">0x3F</code></div>
+                <div class="bit-row" id="gpioABits"></div>
+              </div>
+              <div class="register-block">
+                <div><span>GPIOB ODR</span><code id="gpioBHex">0x0E</code></div>
+                <div class="bit-row" id="gpioBBits"></div>
+              </div>
+            </article>
+            <article class="info-panel" data-panel="challenge" hidden>
+              <h3>Challenge Mode</h3>
+              <p>Pause the clock as close as possible to the target time.</p>
+              <div class="challenge-target"><span>Target</span><strong id="targetTime">00.10</strong></div>
+              <div class="control-row">
+                <button class="btn btn-primary" id="checkTarget" type="button">Check</button>
+                <button class="btn btn-secondary" id="newTarget" type="button">New target</button>
+              </div>
+              <p class="feedback" id="challengeFeedback">Get within 2 seconds for a hit.</p>
+            </article>
+            <article class="info-panel" data-panel="wiring" hidden>
+              <h3>Wiring Notes</h3>
+              <p><strong>Segments:</strong> PA0=A, PA1=B, PA2=C, PA3=D, PA4=E, PA5=F, PA6=G, PA7=DP.</p>
+              <p><strong>Digits:</strong> PB0-PB3 select the four display digits. Common-cathode digit lines are active low.</p>
+              <p><strong>Timer:</strong> HSI 16 MHz, PSC 1599, ARR 9, update interrupt at 1000 Hz.</p>
+            </article>
+          </div>
+
+          <div class="timeline-panel">
+            <div class="timeline-head">
+              <h3>Multiplexing Timeline</h3>
+              <span>last 16 interrupts</span>
+            </div>
+            <div class="timeline" id="timeline"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section gallery-section" id="gallery">
+        <div class="section-heading">
+          <p class="eyebrow">Gallery</p>
+          <h2>Project screenshots</h2>
+        </div>
+        <div class="gallery-grid">
+          <figure>
+            <img src="assets/images/screenshot-latest.png" alt="Latest web interface screenshot" />
+            <figcaption>Latest premium web interface screenshot.</figcaption>
+          </figure>
+          <figure>
+            <img src="../docs/images/proteus-simulation.png" alt="Proteus simulation schematic" />
+            <figcaption>Proteus schematic with STM32F401RE and the multiplexed seven-segment display.</figcaption>
+          </figure>
+          <figure>
+            <img src="../docs/images/cubemx-pinout.png" alt="STM32CubeMX pinout configuration" />
+            <figcaption>CubeMX pinout view showing GPIO outputs for display control.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="cta-section">
+        <h2>Explore the firmware, simulation, and frontend together</h2>
+        <p>The repository includes the embedded source, Proteus project, documentation assets, and this self-contained web interface.</p>
+        <a class="btn btn-primary" href="https://github.com/mohadesehesmaeilzadeh/stm32-digital-clock">Open GitHub repository</a>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>STM32 Digital Clock course project</span>
+      <span>Frontend demo built with HTML, CSS, and JavaScript</span>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

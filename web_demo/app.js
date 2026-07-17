@@ -12,9 +12,7 @@ const SEGMENTS = {
 };
 
 const SEG_CODES = [0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f];
-const digitNodes = Array.from(document.querySelectorAll(".digit"));
-const modeButtons = Array.from(document.querySelectorAll(".mode-button"));
-const panels = Array.from(document.querySelectorAll("[data-panel]"));
+const $ = (id) => document.getElementById(id);
 
 const state = {
   minute: 0,
@@ -25,18 +23,37 @@ const state = {
   running: true,
   speed: 1,
   mode: "lab",
-  score: 0,
-  targetSecond: 10,
   targetMinute: 0,
+  targetSecond: 10,
+  score: 0,
   timeline: [],
 };
 
-let accumulatedMs = 0;
 let lastFrame = performance.now();
+let accumulatedMs = 0;
 
-const $ = (id) => document.getElementById(id);
+function createDisplay(container) {
+  container.innerHTML = "";
+  for (let index = 0; index < 4; index += 1) {
+    const digit = document.createElement("div");
+    digit.className = "digit";
+    digit.dataset.index = String(index);
+    ["a", "b", "c", "d", "e", "f", "g"].forEach((segment) => {
+      const element = document.createElement("span");
+      element.className = `seg ${segment}`;
+      digit.appendChild(element);
+    });
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    digit.appendChild(dot);
+    container.appendChild(digit);
+  }
+}
 
-function displayDigits() {
+createDisplay($("heroDisplay"));
+createDisplay($("simDisplay"));
+
+function digits() {
   return [
     Math.floor(state.minute / 10),
     state.minute % 10,
@@ -46,16 +63,14 @@ function displayDigits() {
 }
 
 function refreshOneDigit() {
-  const digits = displayDigits();
-  const digit = digits[state.activeDigit];
-  const pattern = SEG_CODES[digit] | (state.activeDigit === 1 ? 0x80 : 0);
+  const activePattern = SEG_CODES[digits()[state.activeDigit]] | (state.activeDigit === 1 ? 0x80 : 0);
   const gpioB = 0x0f & ~(1 << state.activeDigit);
 
   state.timeline.push({ digit: state.activeDigit, height: 24 + state.activeDigit * 16 });
   state.timeline = state.timeline.slice(-16);
 
-  renderDisplay(digits);
-  renderRegisters(pattern, gpioB);
+  renderDisplays(activePattern, gpioB);
+  renderRegisters(activePattern, gpioB);
   renderTimeline();
 
   state.activeDigit = (state.activeDigit + 1) % 4;
@@ -65,39 +80,41 @@ function refreshOneDigit() {
 function timerInterrupt() {
   refreshOneDigit();
   state.msCounter += 1;
-
   if (state.msCounter >= 1000) {
     state.msCounter = 0;
     state.second += 1;
-
     if (state.second >= 60) {
       state.second = 0;
-      state.minute += 1;
-      if (state.minute >= 60) {
-        state.minute = 0;
-      }
+      state.minute = (state.minute + 1) % 60;
     }
   }
 }
 
-function renderDisplay(digits) {
-  digitNodes.forEach((node, index) => {
+function renderDisplay(container, persistence) {
+  const currentDigits = digits();
+  Array.from(container.querySelectorAll(".digit")).forEach((digitNode, index) => {
     const active = index === state.activeDigit;
-    node.classList.toggle("active", active);
-    node.classList.toggle("persist", $("showPersistence").checked);
+    const lit = new Set(SEGMENTS[currentDigits[index]]);
+    digitNode.classList.toggle("active", active);
+    digitNode.classList.toggle("persist", persistence);
 
-    const lit = new Set(SEGMENTS[digits[index]]);
-    node.querySelectorAll(".seg").forEach((segment) => {
+    digitNode.querySelectorAll(".seg").forEach((segment) => {
       const key = Array.from(segment.classList).find((name) => name.length === 1);
-      segment.classList.toggle("on", lit.has(key) && (active || $("showPersistence").checked));
+      segment.classList.toggle("on", lit.has(key) && (active || persistence));
     });
 
-    const dot = node.querySelector(".dot");
-    dot.classList.toggle("on", index === 1 && (active || $("showPersistence").checked));
+    digitNode.querySelector(".dot").classList.toggle("on", index === 1 && (active || persistence));
   });
+}
 
-  $("timeLabel").textContent = `${String(state.minute).padStart(2, "0")}.${String(state.second).padStart(2, "0")}`;
-  $("refreshLabel").textContent = `Digit ${state.activeDigit + 1} active`;
+function renderDisplays() {
+  const persistence = $("persistenceToggle").checked;
+  renderDisplay($("heroDisplay"), true);
+  renderDisplay($("simDisplay"), persistence);
+  const timeText = `${String(state.minute).padStart(2, "0")}.${String(state.second).padStart(2, "0")}`;
+  $("heroTime").textContent = timeText;
+  $("simTime").textContent = timeText;
+  $("activeDigitText").textContent = `Digit ${state.activeDigit + 1} active`;
   $("scanPulse").style.setProperty("--scan-x", `${state.activeDigit * 100}%`);
 }
 
@@ -112,10 +129,10 @@ function renderBits(container, value, labels, activeLowDigits = false) {
   container.innerHTML = "";
   labels.forEach((label, reverseIndex) => {
     const bitIndex = 7 - reverseIndex;
-    const isOn = Boolean(value & (1 << bitIndex));
+    const high = Boolean(value & (1 << bitIndex));
     const bit = document.createElement("span");
     bit.className = "bit";
-    bit.classList.toggle("on", activeLowDigits && bitIndex < 4 ? !isOn : isOn);
+    bit.classList.toggle("on", activeLowDigits && bitIndex < 4 ? !high : high);
     bit.textContent = label;
     container.appendChild(bit);
   });
@@ -126,130 +143,112 @@ function renderState() {
   $("secondValue").textContent = state.second;
   $("msValue").textContent = state.msCounter;
   $("activeValue").textContent = state.activeDigit;
-  $("irqValue").textContent = state.irqCount.toLocaleString();
-  $("hzValue").textContent = Math.round(250 * state.speed);
-  $("runStatus").textContent = state.running ? "RUNNING" : "PAUSED";
-  $("runStatus").classList.toggle("muted", !state.running);
-  $("speedStatus").textContent = `${state.speed.toFixed(2)}x`;
+  $("speedLabel").textContent = `${state.speed.toFixed(2)}x`;
+  $("heroSpeed").textContent = `${state.speed.toFixed(2)}x`;
 }
 
 function renderTimeline() {
-  const timeline = $("timeline");
-  timeline.innerHTML = "";
-  const items = state.timeline.length ? state.timeline : Array.from({ length: 16 }, (_, i) => ({ digit: i % 4, height: 20 }));
+  const items = state.timeline.length ? state.timeline : Array.from({ length: 16 }, (_, index) => ({ digit: index % 4, height: 18 }));
+  $("timeline").innerHTML = "";
   items.forEach((item) => {
     const tick = document.createElement("div");
     tick.className = "tick";
-    tick.title = `Digit ${item.digit + 1}`;
+    tick.setAttribute("aria-label", `Digit ${item.digit + 1}`);
     const bar = document.createElement("span");
     bar.style.minHeight = `${item.height}%`;
     tick.appendChild(bar);
-    timeline.appendChild(tick);
+    $("timeline").appendChild(tick);
   });
 }
 
 function setMode(mode) {
   state.mode = mode;
-  modeButtons.forEach((button) => button.classList.toggle("active", button.dataset.mode === mode));
-  panels.forEach((panel) => {
-    panel.hidden = panel.dataset.panel !== mode && panel.dataset.panel !== "lab";
-    if (mode !== "lab" && panel.dataset.panel === "lab") {
-      panel.hidden = true;
-    }
+  document.querySelectorAll(".mode-button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.mode === mode);
   });
-  document.querySelector(".timeline-panel").hidden = false;
+  document.querySelectorAll("[data-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.panel !== mode;
+  });
 }
 
 function resetClock() {
-  Object.assign(state, {
-    minute: 0,
-    second: 0,
-    msCounter: 0,
-    activeDigit: 0,
-    irqCount: 0,
-    timeline: [],
-  });
+  state.minute = 0;
+  state.second = 0;
+  state.msCounter = 0;
+  state.activeDigit = 0;
+  state.irqCount = 0;
+  state.timeline = [];
   renderAll();
-}
-
-function totalSeconds(minute, second) {
-  return minute * 60 + second;
 }
 
 function newTarget() {
   state.targetMinute = Math.floor(Math.random() * 3);
   state.targetSecond = Math.floor(5 + Math.random() * 55);
   $("targetTime").textContent = `${String(state.targetMinute).padStart(2, "0")}.${String(state.targetSecond).padStart(2, "0")}`;
-  $("challengeFeedback").textContent = "Pause the clock on the target, then check.";
+  $("challengeFeedback").textContent = "Pause the clock as close as possible to the target.";
 }
 
 function checkTarget() {
-  const now = totalSeconds(state.minute, state.second);
-  const target = totalSeconds(state.targetMinute, state.targetSecond);
-  const diff = Math.abs(now - target);
-
-  if (diff <= 2) {
-    const earned = Math.max(10, Math.round(60 * state.speed - diff * 8));
-    state.score += earned;
-    $("challengeFeedback").textContent = `Hit. Difference ${diff}s, +${earned} points.`;
+  const now = state.minute * 60 + state.second;
+  const target = state.targetMinute * 60 + state.targetSecond;
+  const difference = Math.abs(now - target);
+  if (difference <= 2) {
+    state.score += Math.max(10, Math.round(70 * state.speed - difference * 8));
+    $("challengeFeedback").textContent = `Hit. Difference: ${difference}s. Score: ${state.score}.`;
     newTarget();
   } else {
     state.score = Math.max(0, state.score - 8);
-    $("challengeFeedback").textContent = `Missed by ${diff}s. Slow the simulation or step manually.`;
+    $("challengeFeedback").textContent = `Missed by ${difference}s. Score: ${state.score}.`;
   }
-
-  $("scoreChip").textContent = `Score ${state.score}`;
-}
-
-function renderAll() {
-  renderDisplay(displayDigits());
-  renderRegisters(SEG_CODES[displayDigits()[state.activeDigit]] || 0, 0x0f & ~(1 << state.activeDigit));
-  renderTimeline();
-  renderState();
 }
 
 function applyInitialOptions() {
   const params = new URLSearchParams(window.location.search);
   const mode = params.get("mode");
   const speed = Number(params.get("speed"));
-  const paused = params.get("paused") === "1";
-
   if (["lab", "challenge", "wiring"].includes(mode)) {
     setMode(mode);
   }
-
   if (Number.isFinite(speed) && speed >= 0.25 && speed <= 16) {
     state.speed = speed;
     $("speedRange").value = String(speed);
   }
-
-  if (paused) {
+  if (params.get("paused") === "1") {
     state.running = false;
     $("toggleRun").textContent = "Run";
   }
 }
 
+function renderAll() {
+  renderDisplays();
+  renderRegisters(SEG_CODES[digits()[state.activeDigit]], 0x0f & ~(1 << state.activeDigit));
+  renderTimeline();
+  renderState();
+}
+
 function frame(now) {
   const elapsed = now - lastFrame;
   lastFrame = now;
-
   if (state.running) {
     accumulatedMs += elapsed * state.speed;
-    const steps = Math.min(80, Math.floor(accumulatedMs));
+    const steps = Math.min(90, Math.floor(accumulatedMs));
     accumulatedMs -= steps;
-    for (let i = 0; i < steps; i += 1) {
+    for (let index = 0; index < steps; index += 1) {
       timerInterrupt();
     }
   }
-
   renderState();
   requestAnimationFrame(frame);
 }
 
+$("themeToggle").addEventListener("click", () => {
+  const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+  document.documentElement.dataset.theme = next;
+});
+
 $("toggleRun").addEventListener("click", () => {
   state.running = !state.running;
   $("toggleRun").textContent = state.running ? "Pause" : "Run";
-  renderState();
 });
 
 $("resetClock").addEventListener("click", resetClock);
@@ -265,14 +264,9 @@ $("speedRange").addEventListener("input", (event) => {
   renderState();
 });
 
-$("showPersistence").addEventListener("change", () => renderDisplay(displayDigits()));
-$("soundTick").addEventListener("change", (event) => {
-  event.target.closest(".check-option").querySelector("span").textContent = event.target.checked
-    ? "Tick marker armed"
-    : "Silent tick marker";
-});
+$("persistenceToggle").addEventListener("change", () => renderDisplays());
 
-modeButtons.forEach((button) => {
+document.querySelectorAll(".mode-button").forEach((button) => {
   button.addEventListener("click", () => setMode(button.dataset.mode));
 });
 

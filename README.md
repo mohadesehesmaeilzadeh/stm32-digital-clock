@@ -11,6 +11,8 @@ This project implements a digital clock using an STM32F401RE microcontroller and
 
 The final application logic is written with direct register access. TIM2 generates a 1 ms interrupt, and that interrupt is used for both display multiplexing and time counting. No delay loop is used for the clock timing.
 
+The repository also includes a premium frontend web interface that presents the project like a product landing page and simulates the timer interrupt, GPIO register state, and multiplexed display behavior directly in the browser.
+
 ## Features
 
 - Counts from `00.00` to `59.59`, then rolls over to `00.00`.
@@ -20,47 +22,139 @@ The final application logic is written with direct register access. TIM2 generat
 - Selects active display digit using GPIOB.
 - Uses the internal 16 MHz HSI clock for stable Proteus simulation.
 - Includes STM32CubeIDE project files and a Proteus simulation project.
+- Includes a modern responsive web interface and browser-based simulator.
 
-## Web Demo
+## 🌐 Web Demo
 
-This repository includes a frontend-only interactive simulator in `web-demo/`.
-It does not need a backend, database, or build system.
+The web demo is located in [`web_demo/`](web_demo/). It is a self-contained frontend built with pure HTML, CSS, and JavaScript. It does not need a backend, database, package installation, or build step.
 
-Open `web-demo/index.html` in a browser to try:
+Live demo link:
 
+```text
+https://mohadesehesmaeilzadeh.github.io/stm32-digital-clock/web_demo/
+```
+
+Latest web interface screenshot:
+
+![Latest web interface screenshot](web_demo/assets/images/screenshot-latest.png)
+
+The web interface includes:
+
+- premium responsive landing page design
+- dark/light theme toggle
 - animated four-digit seven-segment display
 - TIM2 1 ms interrupt simulation
-- GPIOA/GPIOB register view
+- GPIOA/GPIOB register visualization
 - active digit multiplexing timeline
 - speed control, pause, reset, and single-step mode
 - challenge mode for stopping the clock on a target time
-- wiring and timer configuration explanation
+- architecture diagram, technology badges, feature cards, gallery, and GitHub CTA
 
-If GitHub Pages is enabled for this repository, the demo can be served from:
+### Run Locally
 
-```text
-https://mohadesehesmaeilzadeh.github.io/stm32-digital-clock/web-demo/
+Option 1: open the file directly:
+
+```bash
+web_demo/index.html
 ```
 
-### Web Demo Screenshots
+Option 2: run a local static server from the repository root:
 
-#### Lab Mode
+```bash
+python -m http.server 8000
+```
 
-![Web demo lab mode](docs/images/web-demo-lab.png)
+Then open:
 
-Lab mode shows the main simulator view. The seven-segment display is animated like the Proteus circuit, while the panels below show the current interrupt state, active digit, millisecond counter, GPIOA segment output, GPIOB digit-select output, and the recent multiplexing timeline.
+```text
+http://localhost:8000/web_demo/
+```
 
-#### Challenge Mode
+### Deploy With GitHub Pages
 
-![Web demo challenge mode](docs/images/web-demo-challenge.png)
+1. Push the repository to GitHub.
+2. Open the repository on GitHub.
+3. Go to `Settings > Pages`.
+4. Under `Build and deployment`, choose `Deploy from a branch`.
+5. Select branch `main`.
+6. Select folder `/root`.
+7. Save.
+8. Open:
 
-Challenge mode turns the simulator into a small timing game. The user pauses the clock as close as possible to the target time. It makes the embedded timing idea more interactive while still using the same simulated TIM2 interrupt and multiplexed display logic.
+```text
+https://mohadesehesmaeilzadeh.github.io/stm32-digital-clock/web_demo/
+```
 
-#### Wiring Mode
+Other free hosting options:
 
-![Web demo wiring mode](docs/images/web-demo-wiring.png)
+- Vercel: import the GitHub repository and set the output/static directory to the repository root.
+- Netlify: import the GitHub repository and publish the repository root.
 
-Wiring mode explains how the software maps to the hardware circuit. It summarizes the PA0-PA7 segment connections, PB0-PB3 active-low digit selection, and the TIM2 configuration used to generate a 1 ms interrupt from the 16 MHz HSI clock.
+### Screenshot Auto-Update
+
+The README always points to:
+
+```text
+web_demo/assets/images/screenshot-latest.png
+```
+
+To update that screenshot after changing the design, run this from the repository root on Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File web_demo/tools/capture-screenshot.ps1
+```
+
+To capture a specific simulator mode:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File web_demo/tools/capture-screenshot.ps1 -Mode challenge
+powershell -ExecutionPolicy Bypass -File web_demo/tools/capture-screenshot.ps1 -Mode wiring
+```
+
+Commit the updated `web_demo/assets/images/screenshot-latest.png` after running the script. Because the filename stays the same, the README automatically shows the newest screenshot.
+
+### Final Folder Tree
+
+```text
+stm32-digital-clock/
+  DigitalClock/
+    Core/
+      Inc/
+      Src/
+      Startup/
+    Debug/
+      DigitalClock.hex
+    DigitalClock.ioc
+    STM32F401RETX_FLASH.ld
+    STM32F401RETX_RAM.ld
+  docs/
+    images/
+      proteus-simulation.png
+      cubemx-pinout.png
+      cubemx-clock-config.png
+  web_demo/
+    assets/
+      images/
+        screenshot-latest.png
+    tools/
+      capture-screenshot.ps1
+    index.html
+    styles.css
+    app.js
+  DigitalClock.pdsprj
+  README.md
+  .gitignore
+```
+
+### Git Commands
+
+```bash
+git status
+git add README.md .gitignore web_demo
+git add -u
+git commit -m "Add premium web demo interface"
+git push origin main
+```
 
 ## Screenshots
 

@@ -8,6 +8,8 @@ Debug/
 Release/
 build/
 cmake-build-*/
+dist/
+.vite/
 
 # Compiled objects and generated build files
 *.o
@@ -60,3 +62,11 @@ Last Loaded *
 *.swo
 Thumbs.db
 .DS_Store
+
+# Web demo dependencies and local tooling output
+web_demo/node_modules/
+web_demo/.cache/
+web_demo/.temp/
+web_demo/npm-debug.log*
+web_demo/yarn-debug.log*
+web_demo/yarn-error.log*
