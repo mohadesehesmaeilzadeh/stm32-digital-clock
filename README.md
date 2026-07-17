@@ -1,32 +1,19 @@
-# STM32 Digital Clock on 4-Digit Seven-Segment Display
+# STM32 Digital Clock - my timer interrupt project
 
 ![MCU](https://img.shields.io/badge/MCU-STM32F401RE-blue)
 ![Display](https://img.shields.io/badge/Display-7SEG--MPX4--CC-green)
 ![Timer](https://img.shields.io/badge/Timer-TIM2-orange)
-![Language](https://img.shields.io/badge/Language-C-lightgrey)
+![Frontend](https://img.shields.io/badge/Web%20Demo-HTML%20CSS%20JS-purple)
 
-## Overview
+So this is my microcontroller / microprocessor course project: a small digital clock built with an **STM32F401RE** and a 4-digit common-cathode seven-segment display. It sounds simple at first, just show minutes and seconds, right? But then multiplexing, timer interrupts, Proteus wiring, and duplicate interrupt handlers all show up and suddenly it becomes a real project.
 
-This project implements a digital clock using an STM32F401RE microcontroller and a 4-digit common-cathode seven-segment display. The clock shows time in `MM.SS` format, where the decimal point after the second digit is used as the separator between minutes and seconds.
+Long story short, the clock counts from `00.00` to `59.59`, then goes back to `00.00`. The display format is basically `MM.SS`. I used the decimal point after the second digit because the Proteus `7SEG-MPX4-CC` part doesn't really give me a proper colon. Not perfect, but it gets the point across.
 
-The final application logic is written with direct register access. TIM2 generates a 1 ms interrupt, and that interrupt is used for both display multiplexing and time counting. No delay loop is used for the clock timing.
+The final firmware logic is written mostly with direct register access. I didn't use `HAL_Delay()` or delay loops for the actual time counting, because the whole idea of the assignment was to use timers and interrupts properly. Honstly, getting TIM2 and the interrupt handler to behave was the most annoying part 😅.
 
-The repository also includes a premium frontend web interface that presents the project like a product landing page and simulates the timer interrupt, GPIO register state, and multiplexed display behavior directly in the browser.
+## Live Demo
 
-## Features
-
-- Counts from `00.00` to `59.59`, then rolls over to `00.00`.
-- Uses TIM2 update interrupt every 1 ms.
-- Refreshes the four display digits using multiplexing.
-- Drives segment pins directly from GPIOA.
-- Selects active display digit using GPIOB.
-- Uses the internal 16 MHz HSI clock for stable Proteus simulation.
-- Includes STM32CubeIDE project files and a Proteus simulation project.
-- Includes a modern responsive web interface and browser-based simulator.
-
-## 🌐 Web Demo
-
-The web demo is located in [`web_demo/`](web_demo/). It is a self-contained frontend built with pure HTML, CSS, and JavaScript. It does not need a backend, database, package installation, or build step.
+The project also has a frontend web demo now. I added it because just showing C code and a Proteus screenshot felt a bit dry. The web version makes the timer interrupt and multiplexing idea easier to see.
 
 Live demo link:
 
@@ -34,86 +21,122 @@ Live demo link:
 https://mohadesehesmaeilzadeh.github.io/stm32-digital-clock/web_demo/
 ```
 
-Latest web interface screenshot:
+Main web interface screenshot:
 
-![Latest web interface screenshot](web_demo/assets/images/screenshot-latest.png)
+![Latest Web Demo Screenshot](web_demo/assets/images/screenshot-latest.png)
 
-The web interface includes:
+## What this thing actually does
 
-- premium responsive landing page design
-- dark/light theme toggle
-- animated four-digit seven-segment display
-- TIM2 1 ms interrupt simulation
-- GPIOA/GPIOB register visualization
-- active digit multiplexing timeline
-- speed control, pause, reset, and single-step mode
-- challenge mode for stopping the clock on a target time
-- architecture diagram, technology badges, feature cards, gallery, and GitHub CTA
+At the hardware level, the STM32 controls a 4-digit seven-segment display. The segment pins are shared between all digits, so the microcontroller can't just turn on all four digits independently at the same time. Instead, it turns on one digit, writes the segment pattern for that digit, then quickly moves to the next digit. This happens so fast that our eyes see a stable four-digit number.
 
-### Run Locally
-
-Option 1: open the file directly:
-
-```bash
-web_demo/index.html
-```
-
-Option 2: run a local static server from the repository root:
-
-```bash
-python -m http.server 8000
-```
-
-Then open:
+The timer setup is based on the internal **16 MHz HSI clock**. TIM2 is configured so it creates an update interrupt every **1 ms**:
 
 ```text
-http://localhost:8000/web_demo/
+16 MHz / ((1599 + 1) * (9 + 1)) = 1000 Hz
 ```
 
-### Deploy With GitHub Pages
+So yeah, one interrupt every millisecond. In each interrupt, the code refreshes one display digit and increments a millisecond counter. After 1000 interrupts, one second has passed. After 60 seconds, the minute value increases. After 59 minutes and 59 seconds, it rolls over.
 
-1. Push the repository to GitHub.
-2. Open the repository on GitHub.
-3. Go to `Settings > Pages`.
-4. Under `Build and deployment`, choose `Deploy from a branch`.
-5. Select branch `main`.
-6. Select folder `/root`.
-7. Save.
-8. Open:
+## Pin connections
+
+The segment pins are connected like this:
+
+| STM32 Pin | Display Segment |
+| --- | --- |
+| PA0 | A |
+| PA1 | B |
+| PA2 | C |
+| PA3 | D |
+| PA4 | E |
+| PA5 | F |
+| PA6 | G |
+| PA7 | DP |
+
+And the digit select pins:
+
+| STM32 Pin | Display Digit |
+| --- | --- |
+| PB0 | Digit 1 |
+| PB1 | Digit 2 |
+| PB2 | Digit 3 |
+| PB3 | Digit 4 |
+
+Because the display is common cathode, the digit select lines are **active low**. That little detail is easy to forget, and then everything looks broken even when the code is kinda fine.
+
+## Architecture, in normal words
 
 ```text
-https://mohadesehesmaeilzadeh.github.io/stm32-digital-clock/web_demo/
+HSI 16 MHz
+   |
+   v
+RCC clock setup
+   |
+   v
+TIM2 update interrupt every 1 ms
+   |
+   +--> refresh one seven-segment digit
+   |
+   +--> count milliseconds, seconds, and minutes
+   |
+   v
+GPIOA writes segment pattern
+GPIOB selects active digit
+   |
+   v
+7SEG display shows MM.SS
 ```
 
-Other free hosting options:
+Why did I do it this way? Well, using interrupts means the CPU doesn't waste time sitting in a delay loop. The `while(1)` loop is basically empty, which felt weird at first, but that's the point. The timer is doing the regular timing work in the background.
 
-- Vercel: import the GitHub repository and set the output/static directory to the repository root.
-- Netlify: import the GitHub repository and publish the repository root.
+## Web demo screenshots
 
-### Screenshot Auto-Update
+I made the web demo in pure HTML, CSS, and JavaScript. No backend, no database, no npm install. It is just a static frontend, so it can run directly on GitHub Pages.
 
-The README always points to:
+### Demo landing page
 
-```text
-web_demo/assets/images/screenshot-latest.png
-```
+![Premium Web Interface](web_demo/assets/images/screenshot-latest.png)
 
-To update that screenshot after changing the design, run this from the repository root on Windows:
+This is the main landing page. I tried to make it feel more like a proper tech portfolio project instead of a plain student submission. It has the project story, architecture, technologies, gallery, and the simulator section.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File web_demo/tools/capture-screenshot.ps1
-```
+### Lab mode
 
-To capture a specific simulator mode:
+![Web Demo Lab Mode](web_demo/assets/images/demo-lab.png)
 
-```powershell
-powershell -ExecutionPolicy Bypass -File web_demo/tools/capture-screenshot.ps1 -Mode challenge
-powershell -ExecutionPolicy Bypass -File web_demo/tools/capture-screenshot.ps1 -Mode wiring
-```
+Lab mode is the most useful one for explaining the firmware. It shows the animated seven-segment display, current interrupt state, `ms_counter`, active digit, GPIOA segment output, GPIOB digit output, and the multiplexing timeline.
 
-Commit the updated `web_demo/assets/images/screenshot-latest.png` after running the script. Because the filename stays the same, the README automatically shows the newest screenshot.
+### Challenge mode
 
-### Final Folder Tree
+![Web Demo Challenge Mode](web_demo/assets/images/demo-challenge.png)
+
+Challenge mode is just a small game I added for fun. You pause the simulated clock as close as possible to a target time. It sounds silly, but it actually makes the timer behavior more memorable.
+
+### Wiring mode
+
+![Web Demo Wiring Mode](web_demo/assets/images/demo-wiring.png)
+
+Wiring mode explains how the software maps to the actual circuit: PA0-PA7 for segments, PB0-PB3 for digit selection, and TIM2 for the 1 ms interrupt.
+
+## Proteus and CubeMX screenshots
+
+### Proteus simulation
+
+![Proteus Simulation](docs/images/proteus-simulation.png)
+
+This is the circuit in Proteus. The STM32F401RE is connected to the four-digit display through resistors. The running simulation shows the clock value on the seven-segment display.
+
+### CubeMX pinout
+
+![STM32CubeMX Pinout](docs/images/cubemx-pinout.png)
+
+Here PA0-PA7 and PB0-PB3 are configured as outputs. SWD pins are still enabled because debugging/programming without them would be pain.
+
+### CubeMX clock configuration
+
+![STM32CubeMX Clock](docs/images/cubemx-clock-config.png)
+
+The project was first generated with CubeMX, but the final code sets the important clock/timer behavior directly in `main.c`. For Proteus, I used the internal 16 MHz HSI clock because it was simpler and more stable.
+
+## Files and folders
 
 ```text
 stm32-digital-clock/
@@ -136,6 +159,9 @@ stm32-digital-clock/
     assets/
       images/
         screenshot-latest.png
+        demo-lab.png
+        demo-challenge.png
+        demo-wiring.png
     tools/
       capture-screenshot.ps1
     index.html
@@ -146,182 +172,114 @@ stm32-digital-clock/
   .gitignore
 ```
 
-### Git Commands
+The main firmware is in `DigitalClock/Core/Src/main.c`. That file has the clock initialization, GPIO setup, TIM2 setup, seven-segment lookup table, digit refresh function, and `TIM2_IRQHandler`.
+
+`stm32f4xx_it.c` still exists because CubeMX generated it, but the default TIM2 handler is commented out. I had a duplicate `TIM2_IRQHandler` problem at one point and it produced a multiple-definition error. Took me longer than I want to admit to notice that CubeMX had already made one.
+
+## Running the embedded project
+
+For STM32CubeIDE:
+
+```text
+File > Import > Existing Projects into Workspace
+```
+
+Then select the `DigitalClock/` folder and build it. The HEX file should be generated in:
+
+```text
+DigitalClock/Debug/DigitalClock.hex
+```
+
+For Proteus, open:
+
+```text
+DigitalClock.pdsprj
+```
+
+Make sure the STM32 program file points to `DigitalClock/Debug/DigitalClock.hex`, and set the MCU clock frequency to `16 MHz`.
+
+## Running the web demo
+
+Quick way: just open this file in a browser:
+
+```text
+web_demo/index.html
+```
+
+Or run a tiny local server from the repo root:
+
+```bash
+python -m http.server 8000
+```
+
+Then open:
+
+```text
+http://localhost:8000/web_demo/
+```
+
+## Updating the web screenshot
+
+I added a small PowerShell script for this, mostly so I don't have to manually crop screenshots every time I change the design.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File web_demo/tools/capture-screenshot.ps1
+```
+
+The README uses this image:
+
+```text
+web_demo/assets/images/screenshot-latest.png
+```
+
+So if the design changes, I just rerun the script, commit the new image, and the README updates automatically.
+
+## GitHub Pages deployment
+
+To host it for free:
+
+1. Go to the GitHub repository.
+2. Open `Settings`.
+3. Go to `Pages`.
+4. Choose `Deploy from a branch`.
+5. Select `main`.
+6. Select `/root`.
+7. Save it and wait a bit.
+
+The web demo should show up here:
+
+```text
+https://mohadesehesmaeilzadeh.github.io/stm32-digital-clock/web_demo/
+```
+
+Vercel and Netlify can also host it, but GitHub Pages is the easiest for this because the project is already on GitHub.
+
+## What I learned
+
+The biggest thing I learned is that interrupts are powerful but also very unforgiving. If the interrupt flag isn't cleared properly, or if two files define the same handler, the whole project gets weird fast. Also, multiplexing looks simple in diagrams but wiring it and matching the logic levels takes some patience.
+
+Another thing: keeping the project clean for GitHub matters. Build outputs, absolute paths, missing driver folders, random workspace files... all of these can make a repo look messy. I had to clean that up and write the README so someone else can actually understand what is going on.
+
+Note to self: always check whether the display is common cathode or common anode before blaming the code 💀.
+
+## What I'd improve later
+
+If I had more time, I would add push buttons to set the time, maybe add an alarm mode, and use transistor drivers for the digit select lines in real hardware. For the web demo, I might add a small code viewer that highlights the C interrupt handler while the simulator runs. That would be pretty neat.
+
+## Git commands I used
 
 ```bash
 git status
-git add README.md .gitignore web_demo
-git add -u
-git commit -m "Add premium web demo interface"
+git add .
+git commit -m "Finalize README and web demo screenshots"
 git push origin main
 ```
 
-## Screenshots
-
-### Proteus Simulation Circuit
-
-![Proteus simulation circuit](docs/images/proteus-simulation.png)
-
-This screenshot shows the complete Proteus schematic. The STM32F401RE drives a `7SEG-MPX4-CC` four-digit common-cathode display. PA0 to PA7 are connected to the segment lines through current-limiting resistors, and PB0 to PB3 select the active digit. The running simulation shows the clock value on the multiplexed display.
-
-### STM32CubeMX Pinout Configuration
-
-![STM32CubeMX pinout configuration](docs/images/cubemx-pinout.png)
-
-This screenshot shows the STM32CubeMX pinout setup for the STM32F401RETx. GPIO pins PA0 to PA7 are configured as outputs for the seven-segment lines, while PB0 to PB3 are configured as outputs for digit selection. SWD pins are left enabled for debugging/programming.
-
-### STM32CubeMX Clock Configuration
-
-![STM32CubeMX clock configuration](docs/images/cubemx-clock-config.png)
-
-This screenshot shows the CubeMX clock tree. The project was originally generated with CubeMX, but the final application code configures the clock directly in `main.c` and uses the internal 16 MHz HSI clock for simpler and more stable Proteus simulation timing.
-
-## Hardware
-
-| Component | Purpose |
-| --- | --- |
-| STM32F401RE | Main microcontroller |
-| 7SEG-MPX4-CC | Four-digit common-cathode seven-segment display |
-| 330 ohm resistors | Segment current limiting |
-| 10k ohm resistor | Reset pull-up |
-| 3.3 V supply | MCU supply |
-| GND | Common ground |
-
-## Pin Connections
-
-### Segment Pins
-
-| STM32 Pin | Display Pin |
-| --- | --- |
-| PA0 | A |
-| PA1 | B |
-| PA2 | C |
-| PA3 | D |
-| PA4 | E |
-| PA5 | F |
-| PA6 | G |
-| PA7 | DP |
-
-### Digit Select Pins
-
-The display is common cathode, so digit select pins are active low.
-
-| STM32 Pin | Digit |
-| --- | --- |
-| PB0 | Digit 1 |
-| PB1 | Digit 2 |
-| PB2 | Digit 3 |
-| PB3 | Digit 4 |
-
-## Architecture
-
-```text
-          +----------------------+
-          | Internal HSI 16 MHz  |
-          +----------+-----------+
-                     |
-                     v
-          +----------------------+
-          | RCC clock control    |
-          +----------+-----------+
-                     |
-        +------------+-------------+
-        |                          |
-        v                          v
-+---------------+          +----------------+
-| GPIOA PA0-PA7 |          | TIM2 1 ms IRQ  |
-| segment data  |          +-------+--------+
-+-------+-------+                  |
-        |                          v
-        v                  +----------------+
-+---------------+          | TIM2_IRQHandler|
-| 7-seg segments|          +-------+--------+
-+---------------+                  |
-                                   v
-                         +--------------------+
-                         | Refresh one digit  |
-                         | Count milliseconds |
-                         | Update MM.SS       |
-                         +---------+----------+
-                                   |
-                                   v
-                         +--------------------+
-                         | GPIOB PB0-PB3      |
-                         | active-low digit   |
-                         +--------------------+
-```
-
-## Program Flow
-
-```text
-Reset
-  |
-  v
-Clock_Init_16MHz()
-  |
-  v
-GPIO_Init()
-  |
-  v
-Display_UpdateDigits()
-  |
-  v
-TIM2_Init_1ms()
-  |
-  v
-Main loop stays empty
-  |
-  v
-TIM2 interrupt every 1 ms:
-  - clear timer interrupt flag
-  - refresh one display digit
-  - increment millisecond counter
-  - every 1000 ms, increment seconds
-  - every 60 seconds, increment minutes
-  - every 60 minutes, reset to 00.00
-```
-
-## Important Source Files
-
-| File | Description |
-| --- | --- |
-| `Core/Src/main.c` | Main direct-register application code, GPIO setup, TIM2 setup, display refresh, and interrupt handler |
-| `Core/Src/stm32f4xx_it.c` | CubeMX interrupt file; TIM2 handler is commented out to avoid duplicate definition |
-| `Core/Src/gpio.c` | CubeMX-generated GPIO initialization, not used by the final direct-register flow |
-| `Core/Src/tim.c` | CubeMX-generated TIM2 initialization, not used by the final direct-register flow |
-| `Core/Startup/startup_stm32f401retx.s` | Startup code and interrupt vector table |
-| `STM32F401RETX_FLASH.ld` | Flash linker script |
-| `DigitalClock.ioc` | STM32CubeMX configuration file |
-| `DigitalClock.pdsprj` | Proteus simulation project |
-
-## Build Instructions
-
-### STM32CubeIDE
-
-1. Open STM32CubeIDE.
-2. Select `File > Import > Existing Projects into Workspace`.
-3. Choose the project folder.
-4. Build the project.
-5. The generated HEX file should be available under `Debug/DigitalClock.hex`.
-
-### Proteus Simulation
-
-1. Open `DigitalClock.pdsprj` in Proteus.
-2. Confirm the STM32F401RE program file points to the generated `DigitalClock.hex`.
-3. Set the MCU clock frequency to `16 MHz`.
-4. Run the simulation.
-5. The display should count in `MM.SS` format.
-
-## Notes
-
-- The Proteus display uses `7SEG-MPX4-CC`, so segment pins turn on with logic `1`, and digit select pins turn on with logic `0`.
-- The decimal point of the second digit is used as the separator because the selected display part does not provide a true colon.
-- For real hardware, consider using transistor drivers for the digit select lines instead of driving all digit commons directly from MCU pins.
-
 ## Credits
 
-Course project for a microcontroller/microprocessor class.
+Course project for a microcontroller/microprocessor class, July 2026.
 
-Authors:
+Author:
 
 - Mohadeseh Esmaeilzadeh
+
