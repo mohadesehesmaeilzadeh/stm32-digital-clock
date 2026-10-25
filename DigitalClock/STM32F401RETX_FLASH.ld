@@ -8,6 +8,7 @@
 ** @brief       : Linker script for STM32F401RETx Device from STM32F4 series
 **                      512KBytes FLASH
 **                      96KBytes RAM
+                        Team: Negar & Mohadeseh
 **
 **                Set heap size, stack size and stack location according
 **                to application requirements.
