@@ -1,19 +1,19 @@
-# STM32 Digital Clock - my timer interrupt project
+# STM32 Digital Clock - timer interrupt project
 
 ![MCU](https://img.shields.io/badge/MCU-STM32F401RE-blue)
 ![Display](https://img.shields.io/badge/Display-7SEG--MPX4--CC-green)
 ![Timer](https://img.shields.io/badge/Timer-TIM2-orange)
 ![Frontend](https://img.shields.io/badge/Web%20Demo-HTML%20CSS%20JS-purple)
 
-So this is my microcontroller / microprocessor course project: a small digital clock built with an **STM32F401RE** and a 4-digit common-cathode seven-segment display. It sounds simple at first, just show minutes and seconds, right? But then multiplexing, timer interrupts, Proteus wiring, and duplicate interrupt handlers all show up and suddenly it becomes a real project.
+So this is our microcontroller / microprocessor course project: a small digital clock built with an **STM32F401RE** and a 4-digit common-cathode seven-segment display. It sounds simple at first, just show minutes and seconds, right? But then multiplexing, timer interrupts, Proteus wiring, and duplicate interrupt handlers all show up and suddenly it becomes a real project.
 
-Long story short, the clock counts from `00.00` to `59.59`, then goes back to `00.00`. The display format is basically `MM.SS`. I used the decimal point after the second digit because the Proteus `7SEG-MPX4-CC` part doesn't really give me a proper colon. Not perfect, but it gets the point across.
+Long story short, the clock counts from `00.00` to `59.59`, then goes back to `00.00`. The display format is basically `MM.SS`. We used the decimal point after the second digit because the Proteus `7SEG-MPX4-CC` part doesn't really give us a proper colon. Not perfect, but it gets the point across.
 
-The final firmware logic is written mostly with direct register access. I didn't use `HAL_Delay()` or delay loops for the actual time counting, because the whole idea of the assignment was to use timers and interrupts properly. Honstly, getting TIM2 and the interrupt handler to behave was the most annoying part 😅.
+The final firmware logic is written mostly with direct register access. We didn't use `HAL_Delay()` or delay loops for the actual time counting, because the whole idea of the assignment was to use timers and interrupts properly. Honstly, getting TIM2 and the interrupt handler to behave was the most annoying part 😅.
 
 ## Live Demo
 
-The project also has a frontend web demo now. I added it because just showing C code and a Proteus screenshot felt a bit dry. The web version makes the timer interrupt and multiplexing idea easier to see.
+The project also has a frontend web demo now. We added it because just showing C code and a Proteus screenshot felt a bit dry. The web version makes the timer interrupt and multiplexing idea easier to see.
 
 Live demo link:
 
@@ -86,17 +86,17 @@ GPIOB selects active digit
 7SEG display shows MM.SS
 ```
 
-Why did I do it this way? Well, using interrupts means the CPU doesn't waste time sitting in a delay loop. The `while(1)` loop is basically empty, which felt weird at first, but that's the point. The timer is doing the regular timing work in the background.
+Why did we do it this way? Well, using interrupts means the CPU doesn't waste time sitting in a delay loop. The `while(1)` loop is basically empty, which felt weird at first, but that's the point. The timer is doing the regular timing work in the background.
 
 ## Web demo screenshots
 
-I made the web demo in pure HTML, CSS, and JavaScript. No backend, no database, no npm install. It is just a static frontend, so it can run directly on GitHub Pages.
+We made the web demo in pure HTML, CSS, and JavaScript. No backend, no database, no npm install. It is just a static frontend, so it can run directly on GitHub Pages.
 
 ### Demo landing page
 
 ![Premium Web Interface](web_demo/assets/images/screenshot-latest.png)
 
-This is the main landing page. I tried to make it feel more like a proper tech portfolio project instead of a plain student submission. It has the project story, architecture, technologies, gallery, and the simulator section.
+This is the main landing page. We tried to make it feel more like a proper tech portfolio project instead of a plain student submission. It has the project story, architecture, technologies, gallery, and the simulator section.
 
 ### Lab mode
 
@@ -108,7 +108,7 @@ Lab mode is the most useful one for explaining the firmware. It shows the animat
 
 ![Web Demo Challenge Mode](web_demo/assets/images/demo-challenge.png)
 
-Challenge mode is just a small game I added for fun. You pause the simulated clock as close as possible to a target time. It sounds silly, but it actually makes the timer behavior more memorable.
+Challenge mode is just a small game we added for fun. You pause the simulated clock as close as possible to a target time. It sounds silly, but it actually makes the timer behavior more memorable.
 
 ### Wiring mode
 
@@ -134,7 +134,7 @@ Here PA0-PA7 and PB0-PB3 are configured as outputs. SWD pins are still enabled b
 
 ![STM32CubeMX Clock](docs/images/cubemx-clock-config.png)
 
-The project was first generated with CubeMX, but the final code sets the important clock/timer behavior directly in `main.c`. For Proteus, I used the internal 16 MHz HSI clock because it was simpler and more stable.
+The project was first generated with CubeMX, but the final code sets the important clock/timer behavior directly in `main.c`. For Proteus, we used the internal 16 MHz HSI clock because it was simpler and more stable.
 
 ## Files and folders
 
@@ -174,7 +174,7 @@ stm32-digital-clock/
 
 The main firmware is in `DigitalClock/Core/Src/main.c`. That file has the clock initialization, GPIO setup, TIM2 setup, seven-segment lookup table, digit refresh function, and `TIM2_IRQHandler`.
 
-`stm32f4xx_it.c` still exists because CubeMX generated it, but the default TIM2 handler is commented out. I had a duplicate `TIM2_IRQHandler` problem at one point and it produced a multiple-definition error. Took me longer than I want to admit to notice that CubeMX had already made one.
+`stm32f4xx_it.c` still exists because CubeMX generated it, but the default TIM2 handler is commented out. We had a duplicate `TIM2_IRQHandler` problem at one point and it produced a multiple-definition error. Took us longer than we want to admit to notice that CubeMX had already made one.
 
 ## Running the embedded project
 
@@ -220,7 +220,7 @@ http://localhost:8000/web_demo/
 
 ## Updating the web screenshot
 
-I added a small PowerShell script for this, mostly so I don't have to manually crop screenshots every time I change the design.
+We added a small PowerShell script for this, mostly so we don't have to manually crop screenshots every time we change the design.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File web_demo/tools/capture-screenshot.ps1
@@ -232,7 +232,7 @@ The README uses this image:
 web_demo/assets/images/screenshot-latest.png
 ```
 
-So if the design changes, I just rerun the script, commit the new image, and the README updates automatically.
+So if the design changes, We just rerun the script, commit the new image, and the README updates automatically.
 
 ## GitHub Pages deployment
 
@@ -254,19 +254,16 @@ https://mohadesehesmaeilzadeh.github.io/stm32-digital-clock/web_demo/
 
 Vercel and Netlify can also host it, but GitHub Pages is the easiest for this because the project is already on GitHub.
 
-## What I learned
+## What We learned
 
-The biggest thing I learned is that interrupts are powerful but also very unforgiving. If the interrupt flag isn't cleared properly, or if two files define the same handler, the whole project gets weird fast. Also, multiplexing looks simple in diagrams but wiring it and matching the logic levels takes some patience.
+The biggest takeaway? Interrupts are powerful, but they demand absolute precision. If a handler name conflicts or a flag isn't cleared properly, things break fast.
+Note to us: Always double-check whether your 7-segment display is common cathode or common anode before spending hours doubting your register code 💀.
 
-Another thing: keeping the project clean for GitHub matters. Build outputs, absolute paths, missing driver folders, random workspace files... all of these can make a repo look messy. I had to clean that up and write the README so someone else can actually understand what is going on.
+## What We'd improve later
 
-Note to self: always check whether the display is common cathode or common anode before blaming the code 💀.
+If We had more time, we would add push buttons to set the time, maybe add an alarm mode, and use transistor drivers for the digit select lines in real hardware. For the web demo, We might add a small code viewer that highlights the C interrupt handler while the simulator runs. That would be pretty neat.
 
-## What I'd improve later
-
-If I had more time, I would add push buttons to set the time, maybe add an alarm mode, and use transistor drivers for the digit select lines in real hardware. For the web demo, I might add a small code viewer that highlights the C interrupt handler while the simulator runs. That would be pretty neat.
-
-## Git commands I used
+## Git commands we used
 
 ```bash
 git status
@@ -279,7 +276,7 @@ git push origin main
 
 Course project for a microcontroller/microprocessor class, July 2026.
 
-Author:
-
+Authors:
+- Negar Siyahmansour
 - Mohadeseh Esmaeilzadeh
 
